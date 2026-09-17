@@ -2,15 +2,13 @@
 // readable: current menu_publications + the guest RPCs. Everything else must be closed.
 import nextEnv from "@next/env";
 import { createClient } from "@supabase/supabase-js";
-import ws from "ws";
 
 const { loadEnvConfig } = nextEnv;
 loadEnvConfig(process.cwd());
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  { realtime: { transport: ws } }
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 );
 
 const results = [];
@@ -83,4 +81,4 @@ for (const r of results) {
   console.log(`${r.ok ? "PASS" : "FAIL"}  ${r.name}  (${r.detail})`);
 }
 console.log(`\n${results.length - failed}/${results.length} checks passed`);
-process.exit(failed ? 1 : 0);
+if (failed) process.exitCode = 1;

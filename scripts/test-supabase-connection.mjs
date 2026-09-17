@@ -1,18 +1,13 @@
 import nextEnv from "@next/env";
 import { createClient } from "@supabase/supabase-js";
-import ws from "ws";
 
 const { loadEnvConfig } = nextEnv;
 
 loadEnvConfig(process.cwd());
 
-// Node 20 has no native WebSocket global, which supabase-js needs to
-// initialize its (unused here) realtime client. Node 22+ or a browser
-// don't need this.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  { realtime: { transport: ws } }
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 );
 
 // Querying a table that doesn't exist still proves the connection works:
@@ -26,10 +21,11 @@ const { error } = await supabase
 
 const connected = error?.code === "PGRST205" || error?.code === "42P01";
 
+// Set exitCode rather than calling process.exit(): exiting mid-teardown of the
+// client's sockets trips a libuv assertion on Windows and corrupts the status.
 if (connected) {
   console.log("Supabase connection successful");
-  process.exit(0);
 } else {
   console.error("Supabase connection failed:", error);
-  process.exit(1);
+  process.exitCode = 1;
 }

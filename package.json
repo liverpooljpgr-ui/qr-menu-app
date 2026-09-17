@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:isolation": "vitest run tests/rls-isolation.test.ts",
     "test:supabase": "node scripts/test-supabase-connection.mjs",
     "test:rls": "node scripts/test-anon-surface.mjs",
     "db:push": "supabase db push --linked",
@@ -27,7 +29,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.13.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
@@ -35,6 +37,6 @@
     "supabase": "^2.117.0",
     "tailwindcss": "^4",
     "typescript": "^5",
-    "ws": "^8.21.3"
+    "vitest": "^5.0.1"
   }
 }
