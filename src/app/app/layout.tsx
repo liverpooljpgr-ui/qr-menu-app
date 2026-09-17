@@ -9,6 +9,11 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims) redirect("/auth/login?next=/app");
 
+  const claims = data.claims as typeof data.claims & {
+    user_metadata?: { display_name?: string };
+  };
+  const greeting = claims.user_metadata?.display_name || claims.email;
+
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-b">
@@ -17,7 +22,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
             QR Menu
           </Link>
           <div className="flex items-center gap-3 text-sm">
-            <span className="hidden text-muted-foreground sm:inline">{data.claims.email}</span>
+            <span className="hidden text-muted-foreground sm:inline">{greeting}</span>
             <LogoutButton />
           </div>
         </div>
