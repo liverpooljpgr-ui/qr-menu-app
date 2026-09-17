@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Command python,python3,py,node,npm -ErrorAction SilentlyContinue)",
+      "PowerShell(py -3 --version)",
+      "PowerShell(py -3 -m pip --version)",
+      "mcp__claude-in-chrome__javascript_tool"
+    ]
+  }
+}
