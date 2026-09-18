@@ -38,7 +38,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ path });
+    // Return full public URL for the uploaded file
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const photoUrl = `${supabaseUrl}/storage/v1/object/public/menu-items/${path}`;
+
+    return NextResponse.json({ path: photoUrl });
   } catch (error) {
     console.error("Storage upload error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
