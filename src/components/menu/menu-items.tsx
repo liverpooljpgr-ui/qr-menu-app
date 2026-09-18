@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -143,6 +143,10 @@ export function MenuItems({
 }: MenuItemsProps) {
   const [itemList, setItemList] = useState(items);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setItemList(items);
+  }, [items]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
