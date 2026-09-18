@@ -20,7 +20,11 @@
 ### Pricing & Storage
 
 - **Pricing:** Integer minor units (cents) everywhere. Database: `price_minor` (integer). UI: displays formatted decimals; form inputs accept decimals, parsed to minor units before insert.
-- **Image storage:** Supabase Storage with path-based RLS (`/organizations/{orgId}/venues/{venueId}/...`). Uploads via `POST /api/storage/upload` (server-side) to avoid exposing signed URLs in client bundles.
+- **Image storage — one bucket per asset kind.** Never mix kinds in a bucket; a new kind of image gets a new bucket. Defined in `supabase/migrations/*_storage_buckets.sql` (bucket + limits + policies) and mirrored in `src/lib/storage.ts` (`STORAGE_BUCKETS`, `ASSET_RULES`) and `supabase/config.toml`.
+  - `menu-items` — item photos (10 MB, png/jpeg/webp). URL via `getPhotoUrl(photo_path)`.
+  - `venue-logos` — venue logos / PWA icons (2 MB, png/jpeg/webp/svg). URL via `getLogoUrl(logo_path)`.
+  - Object names are `{venue_id}/{timestamp}-{filename}`; DB columns store that bare path. Reads are public; insert/update/delete require org membership for the venue in the first folder segment (`private.storage_object_venue_access`). Test: `tests/storage-policies.test.ts`.
+  - Uploads go through `POST /api/storage/upload` with `file`, `venueId`, and `kind` (`menu-item` | `venue-logo`); the route validates MIME/size against `ASSET_RULES`, and storage RLS enforces the venue folder for the session user.
 
 ---
 
@@ -63,7 +67,7 @@
 
 **Installable per venue:** `/m/[slug]/manifest.webmanifest` (route handler) gives each venue its own PWA identity (`id`/`start_url`/`scope` = `/m/{slug}`), so "Bistro" and "Cafe" install side by side. The root `manifest.ts` is the admin app's identity and applies to `/app`. `InstallPrompt` with `appName` renders the branded guest prompt; without it, it's the admin prompt and hides on `/m/`.
 
-**Per-venue icons:** `brandings.logo_path` (same bucket/path format as `photo_path`; set via "Set logo" on the menus page) is rendered by `/m/[slug]/icon/[size]` (180/192/512, `?maskable=1` for a wider margin) using `sharp` into a square opaque PNG. URLs carry `?v=<sha1(logo_path)>` because installed apps only refetch an icon when its URL changes. No logo → manifest falls back to `/icons/icon-*.png` and the icon route 404s.
+**Per-venue icons:** `brandings.logo_path` (in the `venue-logos` bucket; set via "Set logo" on the Venue tab) is rendered by `/m/[slug]/icon/[size]` (180/192/512, `?maskable=1` for a wider margin) using `sharp` into a square opaque PNG. URLs carry `?v=<sha1(logo_path)>` because installed apps only refetch an icon when its URL changes. No logo → manifest falls back to `/icons/icon-*.png` and the icon route 404s.
 
 **Freshness / offline:** `AutoRefresh` calls `router.refresh()` on visibility/online/60s. SW is network-first for `/m/**` documents and cache-first for Supabase Storage photos. When the SW serves a navigation from cache it records the client id; `OfflineNotice` asks it on mount and shows "last saved version from {time}", clearing itself when a fresh render changes `savedAt`. Test this with a production build (`next-prod` launch config, port 3001) — the SW does not register in dev.
 

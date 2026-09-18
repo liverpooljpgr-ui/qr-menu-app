@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { getPhotoUrl } from "@/lib/storage";
+import { ASSET_RULES, getLogoUrl } from "@/lib/storage";
 import { intlValues, SLUG_RE } from "@/lib/intl-options";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,7 @@ interface VenueSettingsFormProps {
   onLogoChange: (path: string) => void;
 }
 
-const MAX_LOGO_BYTES = 2 * 1024 * 1024;
+const LOGO_RULES = ASSET_RULES["venue-logo"];
 
 export const selectClass =
   "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
@@ -108,8 +108,8 @@ export function VenueSettingsForm({
 
   const handleLogoChange = async (file: File | undefined) => {
     if (!file) return;
-    if (file.size > MAX_LOGO_BYTES) {
-      setError("Logo must be 2 MB or smaller.");
+    if (file.size > LOGO_RULES.maxBytes) {
+      setError(`Logo must be ${Math.round(LOGO_RULES.maxBytes / 1024 / 1024)} MB or smaller.`);
       return;
     }
 
@@ -119,6 +119,7 @@ export function VenueSettingsForm({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("venueId", venue.id);
+      formData.append("kind", "venue-logo");
       const res = await fetch("/api/storage/upload", { method: "POST", body: formData });
       const body = await res.json();
       if (!res.ok || body.error) throw new Error(body.error || "Logo upload failed");
@@ -145,7 +146,7 @@ export function VenueSettingsForm({
           <div className="w-16 h-16 rounded-lg border bg-muted overflow-hidden flex items-center justify-center flex-shrink-0">
             {logoPath ? (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={getPhotoUrl(logoPath)} alt="" className="w-full h-full object-contain" />
+              <img src={getLogoUrl(logoPath)} alt="" className="w-full h-full object-contain" />
             ) : (
               <ImagePlus className="w-6 h-6 text-muted-foreground" />
             )}
@@ -154,7 +155,7 @@ export function VenueSettingsForm({
             <input
               ref={logoInputRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              accept={LOGO_RULES.mimeTypes.join(",")}
               className="hidden"
               onChange={(e) => handleLogoChange(e.target.files?.[0])}
             />

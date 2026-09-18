@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { resolveGuestVenue } from "@/lib/guest-venue";
-import { getPhotoUrl } from "@/lib/storage";
+import { getLogoUrl } from "@/lib/storage";
 import { ICON_SIZES, logoPathOf, type IconSize } from "@/lib/venue-icons";
 
 const BACKGROUND = "#ffffff";
@@ -24,7 +24,7 @@ export async function GET(
 
   const maskable = new URL(request.url).searchParams.get("maskable") === "1";
 
-  const logoRes = await fetch(getPhotoUrl(logoPath)!);
+  const logoRes = await fetch(getLogoUrl(logoPath)!);
   if (!logoRes.ok) return new NextResponse(null, { status: 502 });
 
   const inner = Math.round(size * (maskable ? 0.66 : 0.86));

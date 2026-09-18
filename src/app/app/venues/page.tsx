@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { getPhotoUrl } from "@/lib/storage";
+import { getLogoUrl } from "@/lib/storage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewVenueDialog } from "@/components/venue/new-venue-dialog";
 import Link from "next/link";
@@ -57,7 +57,7 @@ export default async function VenuesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {venues.map((venue) => {
-            const logoUrl = getPhotoUrl(venue.brandings?.logo_path);
+            const logoUrl = getLogoUrl(venue.brandings?.logo_path);
             return (
               <Link key={venue.id} href={`/app/venues/${venue.id}/menus`}>
                 <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
