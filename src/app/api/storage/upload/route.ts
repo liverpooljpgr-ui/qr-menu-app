@@ -17,15 +17,26 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Verify user has access to this venue
-    const { data: membership } = await supabase
+    // Verify user has access to this venue through memberships
+    const { data: venue, error: venueError } = await supabase
       .from("venues")
-      .select("id")
+      .select("id, organization_id")
       .eq("id", venueId)
       .single();
 
-    if (!membership) {
+    if (venueError || !venue) {
       return NextResponse.json({ error: "Venue not found" }, { status: 404 });
+    }
+
+    // Check if user is a member of the organization
+    const { data: membership, error: memberError } = await supabase
+      .from("memberships")
+      .select("id")
+      .eq("organization_id", venue.organization_id)
+      .single();
+
+    if (memberError || !membership) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     // Upload to Supabase Storage
@@ -41,7 +52,10 @@ export async function POST(request: NextRequest) {
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
-      return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+      return NextResponse.json(
+        { error: uploadError.message || "Upload failed" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ path });
