@@ -65,7 +65,7 @@ function SortableItem({
   const price = item.price_minor ? (item.price_minor / 100).toFixed(2) : null;
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} suppressHydrationWarning>
       <Card className="p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
         <button
           type="button"
@@ -76,22 +76,18 @@ function SortableItem({
           <GripVertical className="w-5 h-5" />
         </button>
 
-        {item.photo_path && (
-          <div className="w-16 h-16 rounded border border-muted overflow-hidden flex-shrink-0 bg-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className="w-16 h-16 rounded border border-muted overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+          {item.photo_path ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={item.photo_path}
               alt={item.name}
               className="w-full h-full object-cover"
             />
-          </div>
-        )}
-
-        {!item.photo_path && (
-          <div className="w-16 h-16 rounded border border-muted bg-muted flex items-center justify-center flex-shrink-0">
+          ) : (
             <Image className="w-6 h-6 text-muted-foreground" />
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="flex-1 min-w-0">
           <p className="font-medium truncate">{item.name}</p>
