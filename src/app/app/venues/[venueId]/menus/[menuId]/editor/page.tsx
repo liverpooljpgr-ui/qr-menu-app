@@ -166,13 +166,13 @@ export default function MenuEditor() {
           body: formData,
         });
 
+        const uploadData = await uploadRes.json();
+
         if (!uploadRes.ok) {
-          const errorData = await uploadRes.json();
-          throw new Error(errorData.error || "Photo upload failed");
+          throw new Error(uploadData.error || "Photo upload failed");
         }
-        const { path, error } = await uploadRes.json();
-        if (error) throw new Error(error);
-        photoPath = path;
+        if (uploadData.error) throw new Error(uploadData.error);
+        photoPath = uploadData.path;
       }
 
       const itemData = {
