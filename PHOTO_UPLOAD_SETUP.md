@@ -20,7 +20,18 @@ The photo upload endpoint requires a "menu-items" storage bucket. Follow these s
 4. Set name to `menu-items`
 5. Toggle **"Public bucket"** ON (allows authenticated users to view photos)
 6. Click **"Create bucket"**
-7. (Optional) Under bucket policies, allow authenticated users to upload images
+7. Click on the **Policies** tab for the menu-items bucket
+8. Create an **INSERT** policy for uploads:
+   - Policy name: `Allow authenticated users to upload`
+   - **Targeting**: Select `storage.objects`
+   - **Using expression**: `auth.role() = 'authenticated'`
+   - **With check expression**: `true`
+9. Create a **SELECT** policy for downloads:
+   - Policy name: `Allow public read access`
+   - **Targeting**: Select `storage.objects`
+   - **Using expression**: `true`
+
+> **Note**: If you see the error `"new row violates row-level security policy"`, the RLS policies above need to be configured.
 
 #### For Local Development:
 The bucket is automatically created via `supabase/config.toml` configuration when you run:

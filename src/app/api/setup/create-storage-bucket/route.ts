@@ -35,19 +35,29 @@ export async function POST(request: Request) {
     if (error) {
       // If bucket already exists, that's fine
       if (error.message.includes("already exists")) {
-        return NextResponse.json({
-          success: true,
-          message: "Bucket already exists",
-        });
+        console.log("Bucket already exists, skipping creation");
+        // Bucket exists, continue to configure RLS
+      } else {
+        console.error("Error creating bucket:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
       }
-      console.error("Error creating bucket:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      console.log("Bucket created successfully");
     }
+
+    // Note: RLS policies for storage buckets need to be configured manually
+    // in the Supabase dashboard or via SQL. For now, the bucket is created as public.
+    // To allow uploads, ensure the storage.objects table has RLS policies like:
+    // - Allow authenticated users to insert into storage.objects
+    // - Allow all users to select/download from storage.objects (for public bucket)
 
     return NextResponse.json({
       success: true,
-      message: "Storage bucket created successfully",
-      data,
+      message: "Storage bucket 'menu-items' is ready. Configure RLS in Supabase dashboard if uploads are blocked.",
+      data: { name: "menu-items", public: true },
+      instructions:
+        "If uploads fail, create an RLS policy on storage.objects table: " +
+        "auth.role() = 'authenticated' for INSERT, allow SELECT for all users",
     });
   } catch (error) {
     console.error("Setup error:", error);
