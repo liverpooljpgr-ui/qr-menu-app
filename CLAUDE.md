@@ -57,6 +57,10 @@
 - **Route guards:** `src/proxy.ts` (Next 16 proxy, not deprecated middleware) redirects unauthenticated users to `/auth/login` for `/app/**` routes.
 - **Protected shell:** `src/app/app/layout.tsx` server-side check: `getClaims()` or redirect to login.
 
+### Guest View
+
+**Route:** `/m/[slug]` (public, no auth). Server component: `resolve_venue_slug` RPC → current `menu_publications` for the venue → `src/components/guest/guest-menu.tsx`. Renders snapshots only, never live tables, so guests see the last published version until Republish. 404s when nothing is published. Snapshot shape: `src/lib/menu-snapshot.ts`.
+
 ### Service Worker
 
 **File:** `public/sw.js` (v2)  

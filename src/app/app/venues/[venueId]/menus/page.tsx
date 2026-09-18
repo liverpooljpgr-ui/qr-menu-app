@@ -17,6 +17,7 @@ import {
   Circle,
   Globe,
   EyeOff,
+  ExternalLink,
 } from "lucide-react";
 
 interface Menu {
@@ -31,6 +32,7 @@ interface Menu {
 interface Venue {
   id: string;
   name: string;
+  slug: string;
 }
 
 export default function MenusPage() {
@@ -55,7 +57,7 @@ export default function MenusPage() {
   const loadVenue = async () => {
     const { data } = await supabase
       .from("venues")
-      .select("id, name")
+      .select("id, name, slug")
       .eq("id", venueId)
       .single();
 
@@ -230,10 +232,18 @@ export default function MenusPage() {
             Back
           </Button>
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-semibold">{venue.name}</h1>
           <p className="text-sm text-muted-foreground">Manage menus</p>
         </div>
+        {menus.some((m) => m.status === "published") && (
+          <a href={`/m/${venue.slug}`} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              Guest view
+            </Button>
+          </a>
+        )}
       </div>
 
       {error && (

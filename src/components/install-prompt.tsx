@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -17,6 +18,7 @@ function isStandalone() {
 }
 
 export function InstallPrompt() {
+  const pathname = usePathname();
   const [installEvent, setInstallEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS] = useState(
@@ -42,6 +44,8 @@ export function InstallPrompt() {
     };
   }, []);
 
+  // Guests scanning a QR code shouldn't be nudged to install the venue's admin app.
+  if (pathname.startsWith("/m/")) return null;
   if (installed || dismissed) return null;
   if (!installEvent && !isIOS) return null;
 
