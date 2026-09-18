@@ -358,20 +358,23 @@ export default function MenuEditor() {
               isLoading={isSaving}
             />
           ) : selectedSection ? (
-            <MenuItems
-              items={items}
-              isLoading={isLoading}
-              onAddItem={() => {
-                setEditingItem(null);
-                setFormMode("add-item");
-              }}
-              onEditItem={(item) => {
-                setEditingItem(item);
-                setFormMode("edit-item");
-              }}
-              onDeleteItem={handleDeleteItem}
-              onReorder={handleReorderItems}
-            />
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">{selectedSection.name}</h2>
+              <MenuItems
+                items={items}
+                isLoading={isLoading}
+                onAddItem={() => {
+                  setEditingItem(null);
+                  setFormMode("add-item");
+                }}
+                onEditItem={(item) => {
+                  setEditingItem(item);
+                  setFormMode("edit-item");
+                }}
+                onDeleteItem={handleDeleteItem}
+                onReorder={handleReorderItems}
+              />
+            </div>
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
