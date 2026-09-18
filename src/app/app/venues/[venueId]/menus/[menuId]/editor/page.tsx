@@ -10,7 +10,7 @@ import { ItemForm } from "@/components/menu/item-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { ChevronLeft, Plus } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
 interface Menu {
   id: string;
@@ -40,6 +40,7 @@ export default function MenuEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [formMode, setFormMode] = useState<FormMode>("none");
   const [editingSection, setEditingSection] = useState<MenuSection | null>(null);
+  const [parentForNewSection, setParentForNewSection] = useState<MenuSection | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +88,7 @@ export default function MenuEditor() {
 
     setSections(data || []);
     if (data?.length && !selectedSection) {
-      setSelectedSection(data[0]);
+      setSelectedSection(data.find((s) => s.parent_section_id === null) ?? data[0]);
     }
   };
 
@@ -116,13 +117,16 @@ export default function MenuEditor() {
 
         if (error) throw error;
       } else {
+        const parentId = parentForNewSection?.id ?? null;
+        const siblings = sections.filter((s) => s.parent_section_id === parentId);
         const { error } = await supabase
           .from("menu_sections")
           .insert([
             {
               name: data.name,
               menu_id: menuId,
-              position: sections.length,
+              parent_section_id: parentId,
+              position: siblings.length,
               venue_id: venueId,
               translations: {},
             },
@@ -136,6 +140,7 @@ export default function MenuEditor() {
 
       setFormMode("none");
       setEditingSection(null);
+      setParentForNewSection(null);
       await loadSections();
     } catch (err) {
       console.error("Error saving section:", err);
@@ -293,7 +298,11 @@ export default function MenuEditor() {
   };
 
   const handleDeleteSection = async (sectionId: string) => {
-    if (!confirm("Delete this section and all its items?")) return;
+    const hasChildren = sections.some((s) => s.parent_section_id === sectionId);
+    const prompt = hasChildren
+      ? "Delete this section, its subsections, and all their items?"
+      : "Delete this section and all its items?";
+    if (!confirm(prompt)) return;
 
     const { error } = await supabase
       .from("menu_sections")
@@ -306,8 +315,10 @@ export default function MenuEditor() {
     }
 
     await loadSections();
-    if (selectedSection?.id === sectionId) {
-      setSelectedSection(sections[0] || null);
+    const removed = (s: MenuSection) => s.id === sectionId || s.parent_section_id === sectionId;
+    if (selectedSection && removed(selectedSection)) {
+      const remaining = sections.filter((s) => !removed(s));
+      setSelectedSection(remaining.find((s) => s.parent_section_id === null) ?? remaining[0] ?? null);
     }
   };
 
@@ -326,6 +337,10 @@ export default function MenuEditor() {
 
     await loadItems(selectedSection!.id);
   };
+
+  const selectedParent = selectedSection?.parent_section_id
+    ? (sections.find((s) => s.id === selectedSection.parent_section_id) ?? null)
+    : null;
 
   if (!venue) {
     return <div className="text-muted-foreground">Loading...</div>;
@@ -359,10 +374,12 @@ export default function MenuEditor() {
             <SectionForm
               venueId={venueId}
               initialData={editingSection || undefined}
+              parentName={parentForNewSection?.name}
               onSubmit={handleSaveSection}
               onCancel={() => {
                 setFormMode("none");
                 setEditingSection(null);
+                setParentForNewSection(null);
               }}
               isLoading={isSaving}
             />
@@ -373,6 +390,12 @@ export default function MenuEditor() {
               isLoading={isLoading}
               onAddSection={() => {
                 setEditingSection(null);
+                setParentForNewSection(null);
+                setFormMode("add-section");
+              }}
+              onAddSubsection={(parent) => {
+                setEditingSection(null);
+                setParentForNewSection(parent);
                 setFormMode("add-section");
               }}
               onSelectSection={setSelectedSection}
@@ -405,12 +428,24 @@ export default function MenuEditor() {
           ) : selectedSection ? (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-semibold">{selectedSection.name}</h2>
-                {!selectedSection.is_active && (
+                <h2 className="text-lg font-semibold">
+                  {selectedParent && (
+                    <span className="text-muted-foreground font-normal">
+                      {selectedParent.name} ›{" "}
+                    </span>
+                  )}
+                  {selectedSection.name}
+                </h2>
+                {!selectedSection.is_active ? (
                   <p className="text-sm text-muted-foreground">
                     This section is hidden from the published menu.
                   </p>
-                )}
+                ) : selectedParent && !selectedParent.is_active ? (
+                  <p className="text-sm text-muted-foreground">
+                    Hidden from the published menu because &ldquo;{selectedParent.name}&rdquo; is
+                    hidden.
+                  </p>
+                ) : null}
               </div>
               <MenuItems
                 items={items}
@@ -431,18 +466,8 @@ export default function MenuEditor() {
           ) : (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
-                Create a section first
+                Add a section to start adding items.
               </p>
-              <Button
-                className="mt-4"
-                onClick={() => {
-                  setEditingSection(null);
-                  setFormMode("add-section");
-                }}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add First Section
-              </Button>
             </div>
           )}
         </Card>

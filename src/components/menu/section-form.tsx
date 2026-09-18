@@ -20,6 +20,7 @@ interface SectionFormProps {
   }) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
+  parentName?: string;
 }
 
 export function SectionForm({
@@ -28,6 +29,7 @@ export function SectionForm({
   onSubmit,
   onCancel,
   isLoading = false,
+  parentName,
 }: SectionFormProps) {
   const [name, setName] = useState(initialData?.name || "");
   const [description, setDescription] = useState(
@@ -60,7 +62,11 @@ export function SectionForm({
     <Card className="p-6 max-w-md">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">
-          {initialData ? "Edit Section" : "New Section"}
+          {initialData
+            ? "Edit Section"
+            : parentName
+              ? `New subsection of ${parentName}`
+              : "New Section"}
         </h2>
         <button
           type="button"

@@ -100,7 +100,8 @@
 - **venues:** id, organization_id, name, slug, currency, timezone, default_locale, supported_locales, address (nullable), created_at, updated_at. Edited on the Venue tab of `/app/venues/[venueId]/menus`.
 - **brandings:** id, venue_id (unique → one-to-one, embed as `brandings(logo_path)`), theme_key, palette, logo_path.
 - **menus:** id, venue_id, name, status ("draft" | "published"), created_at, updated_at.
-- **menu_sections:** id, menu_id, venue_id, name, position (integer), is_active (boolean), created_at, updated_at.
+- **menu_sections:** id, menu_id, venue_id, name, position (integer), is_active (boolean), parent_section_id (nullable, composite FK to menu_sections), created_at, updated_at.
+  - **One level of nesting.** A top-level section may hold subsections, each with its own items, alongside the parent's own items. Depth > 1 and cross-menu parents are rejected by trigger `menu_sections_enforce_depth` (errcode 23514). `position` is per sibling group. Snapshot: `sections[].subsections[].items`, built via `private.section_items_snapshot(section_id)`. A hidden parent hides its subsections.
 - **menu_items:** id, section_id, venue_id, name, price_minor (integer), description (nullable), photo_path (nullable), is_available (boolean), is_active (boolean), created_at, updated_at.
   - `is_active = false` → excluded from `publish_menu` snapshots entirely (hidden from guests, still editable). `is_available = false` → still published, shown as sold out. Test: `tests/publish-visibility.test.ts`.
 - **option_groups:** id, menu_item_id, venue_id, name, position (integer), selection_type, created_at, updated_at.

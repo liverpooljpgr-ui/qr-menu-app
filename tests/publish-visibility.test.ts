@@ -21,6 +21,7 @@ interface SnapshotItem {
 interface SnapshotSection {
   id: string;
   items: SnapshotItem[];
+  subsections: { id: string; items: SnapshotItem[] }[];
 }
 interface Snapshot {
   sections: SnapshotSection[];
@@ -103,6 +104,110 @@ describe.skipIf(!secretKey)("publish_menu respects is_active", () => {
     expect(itemIds).toContain(soldOutItem.id);
     expect(itemIds).not.toContain(hiddenItem.id);
     expect(visible.items.find((i) => i.id === soldOutItem.id)!.is_available).toBe(false);
+  });
+
+  it("nests subsections with their own items, hidden along with their parent", async () => {
+    const c = owner.client;
+
+    const parent = unwrap(
+      await c
+        .from("menu_sections")
+        .insert({ menu_id: fx.menuId, venue_id: fx.venueId, name: "Pizzas" })
+        .select()
+        .single()
+    );
+    const child = unwrap(
+      await c
+        .from("menu_sections")
+        .insert({
+          menu_id: fx.menuId,
+          venue_id: fx.venueId,
+          name: "Specialty",
+          parent_section_id: parent.id,
+        })
+        .select()
+        .single()
+    );
+    const parentItem = unwrap(
+      await c
+        .from("menu_items")
+        .insert({ section_id: parent.id, venue_id: fx.venueId, name: "Margherita", price_minor: 900 })
+        .select()
+        .single()
+    );
+    const childItem = unwrap(
+      await c
+        .from("menu_items")
+        .insert({ section_id: child.id, venue_id: fx.venueId, name: "Truffle", price_minor: 1500 })
+        .select()
+        .single()
+    );
+
+    let snapshot = unwrap(await c.rpc("publish_menu", { p_menu_id: fx.menuId }))
+      .snapshot as unknown as Snapshot;
+    const top = snapshot.sections.find((s) => s.id === parent.id)!;
+    expect(top.items.map((i) => i.id)).toEqual([parentItem.id]);
+    expect(top.subsections.map((s) => s.id)).toEqual([child.id]);
+    expect(top.subsections[0].items.map((i) => i.id)).toEqual([childItem.id]);
+    // Subsections never appear at the top level.
+    expect(snapshot.sections.map((s) => s.id)).not.toContain(child.id);
+
+    // Hiding only the child removes it but keeps the parent.
+    expect(
+      (await c.from("menu_sections").update({ is_active: false }).eq("id", child.id)).error
+    ).toBeNull();
+    snapshot = unwrap(await c.rpc("publish_menu", { p_menu_id: fx.menuId }))
+      .snapshot as unknown as Snapshot;
+    expect(snapshot.sections.find((s) => s.id === parent.id)!.subsections).toEqual([]);
+
+    // Hiding the parent removes both.
+    expect(
+      (await c.from("menu_sections").update({ is_active: true }).eq("id", child.id)).error
+    ).toBeNull();
+    expect(
+      (await c.from("menu_sections").update({ is_active: false }).eq("id", parent.id)).error
+    ).toBeNull();
+    snapshot = unwrap(await c.rpc("publish_menu", { p_menu_id: fx.menuId }))
+      .snapshot as unknown as Snapshot;
+    expect(snapshot.sections.map((s) => s.id)).not.toContain(parent.id);
+  });
+
+  it("rejects nesting deeper than one level", async () => {
+    const c = owner.client;
+    const parent = unwrap(
+      await c
+        .from("menu_sections")
+        .insert({ menu_id: fx.menuId, venue_id: fx.venueId, name: "Level 1" })
+        .select()
+        .single()
+    );
+    const child = unwrap(
+      await c
+        .from("menu_sections")
+        .insert({
+          menu_id: fx.menuId,
+          venue_id: fx.venueId,
+          name: "Level 2",
+          parent_section_id: parent.id,
+        })
+        .select()
+        .single()
+    );
+
+    const grandchild = await c.from("menu_sections").insert({
+      menu_id: fx.menuId,
+      venue_id: fx.venueId,
+      name: "Level 3",
+      parent_section_id: child.id,
+    });
+    expect(grandchild.error?.code).toBe("23514");
+
+    // A section that already has children can't be demoted under another.
+    const demote = await c
+      .from("menu_sections")
+      .update({ parent_section_id: fx.sectionId })
+      .eq("id", parent.id);
+    expect(demote.error?.code).toBe("23514");
   });
 
   it("publishing another menu in the venue retires the current one", async () => {

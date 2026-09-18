@@ -74,8 +74,14 @@ function ItemRow({
 }
 
 export function GuestMenu({ venueName, currency, locale, menus: rawMenus }: GuestMenuProps) {
+  // Drop empty subsections, then sections with nothing left to show.
   const menus = rawMenus
-    .map((m) => ({ ...m, sections: m.sections.filter((s) => s.items.length > 0) }))
+    .map((m) => ({
+      ...m,
+      sections: m.sections
+        .map((s) => ({ ...s, subsections: s.subsections.filter((c) => c.items.length > 0) }))
+        .filter((s) => s.items.length > 0 || s.subsections.length > 0),
+    }))
     .filter((m) => m.sections.length > 0);
   const allSections = menus.flatMap((m) => m.sections);
   const showMenuNames = menus.length > 1;
@@ -128,6 +134,23 @@ export function GuestMenu({ venueName, currency, locale, menus: rawMenus }: Gues
                     />
                   ))}
                 </ul>
+                {section.subsections.map((sub) => (
+                  <div key={sub.id} className="mt-4">
+                    <h3 className="text-base font-semibold text-muted-foreground mb-1">
+                      {sub.name}
+                    </h3>
+                    <ul className="divide-y">
+                      {sub.items.map((item) => (
+                        <ItemRow
+                          key={item.id}
+                          item={item}
+                          currency={currency}
+                          locale={locale}
+                        />
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </section>
             ))}
           </div>

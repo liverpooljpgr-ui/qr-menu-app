@@ -317,6 +317,7 @@ export type Database = {
           is_active: boolean
           menu_id: string
           name: string
+          parent_section_id: string | null
           position: number
           translations: Json
           updated_at: string
@@ -328,6 +329,7 @@ export type Database = {
           is_active?: boolean
           menu_id: string
           name: string
+          parent_section_id?: string | null
           position?: number
           translations?: Json
           updated_at?: string
@@ -339,6 +341,7 @@ export type Database = {
           is_active?: boolean
           menu_id?: string
           name?: string
+          parent_section_id?: string | null
           position?: number
           translations?: Json
           updated_at?: string
@@ -350,6 +353,13 @@ export type Database = {
             columns: ["menu_id", "venue_id"]
             isOneToOne: false
             referencedRelation: "menus"
+            referencedColumns: ["id", "venue_id"]
+          },
+          {
+            foreignKeyName: "menu_sections_parent_section_id_venue_id_fkey"
+            columns: ["parent_section_id", "venue_id"]
+            isOneToOne: false
+            referencedRelation: "menu_sections"
             referencedColumns: ["id", "venue_id"]
           },
           {

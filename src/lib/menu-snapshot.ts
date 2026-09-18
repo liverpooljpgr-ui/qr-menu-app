@@ -27,11 +27,15 @@ export interface SnapshotItem {
   option_groups: SnapshotOptionGroup[];
 }
 
-export interface SnapshotSection {
+export interface SnapshotSubsection {
   id: string;
   name: string;
   position: number;
   items: SnapshotItem[];
+}
+
+export interface SnapshotSection extends SnapshotSubsection {
+  subsections: SnapshotSubsection[];
 }
 
 export interface MenuSnapshot {

@@ -147,42 +147,53 @@ export default function MenusPage() {
           .eq("menu_id", menu.id);
 
         if (sections && sections.length > 0) {
-          const newSections = sections.map((s) => ({
+          // Parents first so subsections can reference their new ids.
+          const idMap = new Map<string, string>();
+          const copySection = (s: (typeof sections)[number]) => ({
             menu_id: newMenu.id,
             venue_id: venueId,
             name: s.name,
             position: s.position,
             is_active: s.is_active,
-          }));
+            parent_section_id: s.parent_section_id ? (idMap.get(s.parent_section_id) ?? null) : null,
+          });
 
-          const { data: insertedSections } = await supabase
-            .from("menu_sections")
-            .insert(newSections)
-            .select();
+          for (const level of [
+            sections.filter((s) => s.parent_section_id === null),
+            sections.filter((s) => s.parent_section_id !== null),
+          ]) {
+            for (const s of level) {
+              const { data: inserted, error: sectionError } = await supabase
+                .from("menu_sections")
+                .insert(copySection(s))
+                .select("id")
+                .single();
+              if (sectionError) throw sectionError;
+              idMap.set(s.id, inserted.id);
+            }
+          }
 
-          // Duplicate items for each section
-          if (insertedSections) {
-            for (let i = 0; i < sections.length; i++) {
-              const { data: items } = await supabase
-                .from("menu_items")
-                .select("*")
-                .eq("section_id", sections[i].id);
+          for (const s of sections) {
+            const { data: items } = await supabase
+              .from("menu_items")
+              .select("*")
+              .eq("section_id", s.id);
 
-              if (items && items.length > 0) {
-                const newItems = items.map((item) => ({
-                  section_id: insertedSections[i].id,
-                  venue_id: venueId,
-                  name: item.name,
-                  description: item.description,
-                  price_minor: item.price_minor,
-                  photo_path: item.photo_path,
-                  is_available: item.is_available,
-                  is_active: item.is_active,
-                  position: item.position,
-                }));
+            if (items && items.length > 0) {
+              const newItems = items.map((item) => ({
+                section_id: idMap.get(s.id)!,
+                venue_id: venueId,
+                name: item.name,
+                description: item.description,
+                price_minor: item.price_minor,
+                photo_path: item.photo_path,
+                is_available: item.is_available,
+                is_active: item.is_active,
+                position: item.position,
+              }));
 
-                await supabase.from("menu_items").insert(newItems);
-              }
+              const { error: itemsError } = await supabase.from("menu_items").insert(newItems);
+              if (itemsError) throw itemsError;
             }
           }
         }
