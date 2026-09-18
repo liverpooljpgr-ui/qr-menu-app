@@ -96,7 +96,10 @@ function SortableSection({
               size="sm"
               title={section.is_active ? "Hide from published menu" : "Show in published menu"}
               aria-label={section.is_active ? "Hide section" : "Show section"}
-              onClick={() => onToggleActive(section)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleActive(section);
+              }}
             >
               {section.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </Button>
@@ -114,7 +117,10 @@ function SortableSection({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onDelete(section.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(section.id);
+              }}
             >
               <Trash2 className="w-4 h-4" />
             </Button>
