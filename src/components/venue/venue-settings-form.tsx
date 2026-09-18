@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getPhotoUrl } from "@/lib/storage";
+import { intlValues, SLUG_RE } from "@/lib/intl-options";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,17 +26,10 @@ interface VenueSettingsFormProps {
   onLogoChange: (path: string) => void;
 }
 
-const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
-const selectClass =
+export const selectClass =
   "h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-50";
-
-function intlValues(key: "currency" | "timeZone", current: string): string[] {
-  const values =
-    typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf(key) : [];
-  return values.includes(current) ? values : [current, ...values];
-}
 
 export function VenueSettingsForm({
   venue,

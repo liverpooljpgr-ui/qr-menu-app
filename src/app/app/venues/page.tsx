@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getPhotoUrl } from "@/lib/storage";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { NewVenueDialog } from "@/components/venue/new-venue-dialog";
 import Link from "next/link";
 import { MapPin, Store } from "lucide-react";
 
@@ -19,25 +20,39 @@ export default async function VenuesPage() {
     );
   }
 
-  const { data: venues } = await supabase
-    .from("venues")
-    .select("id, name, slug, currency, address, organizations(name), brandings(logo_path)")
-    .order("created_at");
+  const [{ data: venues }, { data: organizations }] = await Promise.all([
+    supabase
+      .from("venues")
+      .select("id, name, slug, currency, address, organizations(name), brandings(logo_path)")
+      .order("created_at"),
+    supabase.from("organizations").select("id, name").order("name"),
+  ]);
+
+  const newVenue = (
+    <NewVenueDialog
+      organizations={organizations ?? []}
+      defaultCurrency={venues?.[0]?.currency ?? "USD"}
+    />
+  );
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Your Venues</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage menus and content for each venue
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Your Venues</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage menus and content for each venue
+          </p>
+        </div>
+        {newVenue}
       </div>
 
       {!venues?.length ? (
-        <div className="text-center py-12">
+        <div className="text-center py-12 space-y-4">
           <p className="text-muted-foreground">
             Create a venue first to start managing menus.
           </p>
+          <div className="flex justify-center">{newVenue}</div>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
