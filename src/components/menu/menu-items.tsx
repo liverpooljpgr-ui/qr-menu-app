@@ -21,7 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { GripVertical, Plus, Trash2, Image } from "lucide-react";
-import { formatFileSize } from "@/lib/image-compression";
+import { getPhotoUrl } from "@/lib/storage";
 
 export interface MenuItem {
   id: string;
@@ -63,6 +63,7 @@ function SortableItem({
   };
 
   const price = item.price_minor ? (item.price_minor / 100).toFixed(2) : null;
+  const photoUrl = getPhotoUrl(item.photo_path);
 
   return (
     <div ref={setNodeRef} style={style} suppressHydrationWarning>
@@ -77,10 +78,10 @@ function SortableItem({
         </button>
 
         <div className="w-16 h-16 rounded border border-muted overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-          {item.photo_path ? (
+          {photoUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
-              src={item.photo_path}
+              src={photoUrl}
               alt={item.name}
               className="w-full h-full object-cover"
             />

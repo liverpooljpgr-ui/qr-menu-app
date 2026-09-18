@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileInput } from "@/components/ui/file-input";
+import { getPhotoUrl } from "@/lib/storage";
 import { X } from "lucide-react";
 
 interface ItemFormProps {
@@ -25,6 +26,7 @@ interface ItemFormProps {
     description?: string;
     price_minor_units?: number;
     photoFile?: File;
+    removePhoto?: boolean;
   }) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
@@ -49,21 +51,25 @@ export function ItemForm({
       : ""
   );
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const photoPreview = useMemo(() => {
     if (photoFile) {
       return URL.createObjectURL(photoFile);
     }
-    return initialData?.photo_path || undefined;
-  }, [photoFile, initialData?.photo_path]);
+    if (removePhoto) return undefined;
+    return getPhotoUrl(initialData?.photo_path);
+  }, [photoFile, removePhoto, initialData?.photo_path]);
 
   const handlePhotoChange = async (file: File | null) => {
     if (file) {
       const compressed = await compressImageIfNeeded(file);
       setPhotoFile(compressed);
+      setRemovePhoto(false);
     } else {
       setPhotoFile(null);
+      setRemovePhoto(true);
     }
   };
 
@@ -87,6 +93,7 @@ export function ItemForm({
         description: description.trim() || undefined,
         price_minor_units: priceCents,
         photoFile: photoFile || undefined,
+        removePhoto: removePhoto && !photoFile,
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save item");

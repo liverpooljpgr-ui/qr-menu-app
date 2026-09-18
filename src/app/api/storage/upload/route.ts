@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
     // Upload to Supabase Storage
     // Note: This route is behind authentication (/app/**), and RLS on storage
     // will protect access based on the user's session
-    const filename = `${Date.now()}-${file.name}`;
-    const path = `${venueId}/${filename}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${venueId}/${Date.now()}-${safeName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("menu-items")
@@ -38,11 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return full public URL for the uploaded file
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const photoUrl = `${supabaseUrl}/storage/v1/object/public/menu-items/${path}`;
-
-    return NextResponse.json({ path: photoUrl });
+    return NextResponse.json({ path });
   } catch (error) {
     console.error("Storage upload error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

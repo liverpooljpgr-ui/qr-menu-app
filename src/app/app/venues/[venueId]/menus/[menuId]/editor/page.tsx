@@ -150,11 +150,12 @@ export default function MenuEditor() {
     description?: string;
     price_minor_units?: number;
     photoFile?: File;
+    removePhoto?: boolean;
   }) => {
     setIsSaving(true);
     setError(null);
     try {
-      let photoPath = editingItem?.photo_path;
+      let photoPath = data.removePhoto ? null : editingItem?.photo_path;
 
       if (data.photoFile) {
         const formData = new FormData();
