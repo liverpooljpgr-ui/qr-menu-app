@@ -327,11 +327,13 @@ export default function MenuEditor() {
           ) : (
             <MenuSections
               sections={sections}
+              selectedSectionId={selectedSection?.id}
               isLoading={isLoading}
               onAddSection={() => {
                 setEditingSection(null);
                 setFormMode("add-section");
               }}
+              onSelectSection={setSelectedSection}
               onEditSection={(section) => {
                 setEditingSection(section);
                 setFormMode("edit-section");

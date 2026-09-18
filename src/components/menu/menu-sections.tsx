@@ -31,8 +31,10 @@ export interface MenuSection {
 
 interface MenuSectionsProps {
   sections: MenuSection[];
+  selectedSectionId?: string;
   isLoading?: boolean;
   onAddSection?: () => void;
+  onSelectSection?: (section: MenuSection) => void;
   onEditSection?: (section: MenuSection) => void;
   onDeleteSection?: (id: string) => void;
   onReorder?: (sections: MenuSection[]) => Promise<void>;
@@ -40,10 +42,14 @@ interface MenuSectionsProps {
 
 function SortableSection({
   section,
+  isSelected,
+  onSelect,
   onEdit,
   onDelete,
 }: {
   section: MenuSection;
+  isSelected?: boolean;
+  onSelect?: (section: MenuSection) => void;
   onEdit?: (section: MenuSection) => void;
   onDelete?: (id: string) => void;
 }) {
@@ -58,7 +64,12 @@ function SortableSection({
 
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className="p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+      <Card
+        className={`p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer ${
+          isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
+        }`}
+        onClick={() => onSelect?.(section)}
+      >
         <button
           type="button"
           {...attributes}
@@ -99,8 +110,10 @@ function SortableSection({
 
 export function MenuSections({
   sections,
+  selectedSectionId,
   isLoading = false,
   onAddSection,
+  onSelectSection,
   onEditSection,
   onDeleteSection,
   onReorder,
@@ -194,6 +207,8 @@ export function MenuSections({
               <SortableSection
                 key={section.id}
                 section={section}
+                isSelected={section.id === selectedSectionId}
+                onSelect={onSelectSection}
                 onEdit={onEditSection}
                 onDelete={onDeleteSection}
               />
