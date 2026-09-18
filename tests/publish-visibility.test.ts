@@ -105,6 +105,44 @@ describe.skipIf(!secretKey)("publish_menu respects is_active", () => {
     expect(visible.items.find((i) => i.id === soldOutItem.id)!.is_available).toBe(false);
   });
 
+  it("publishing another menu in the venue retires the current one", async () => {
+    const c = owner.client;
+
+    // Fixture menu is currently published; add a second menu and publish it.
+    const second = unwrap(
+      await c
+        .from("menus")
+        .insert({ venue_id: fx.venueId, name: "Second" })
+        .select()
+        .single()
+    );
+    const pub = unwrap(await c.rpc("publish_menu", { p_menu_id: second.id }));
+    expect(pub.is_current).toBe(true);
+
+    const current = unwrap(
+      await c
+        .from("menu_publications")
+        .select("menu_id")
+        .eq("venue_id", fx.venueId)
+        .eq("is_current", true)
+    );
+    expect(current).toEqual([{ menu_id: second.id }]);
+
+    const first = unwrap(await c.from("menus").select("status").eq("id", fx.menuId).single());
+    expect(first.status).toBe("draft");
+
+    // Publishing the original again swaps back.
+    unwrap(await c.rpc("publish_menu", { p_menu_id: fx.menuId }));
+    const swapped = unwrap(
+      await c
+        .from("menu_publications")
+        .select("menu_id")
+        .eq("venue_id", fx.venueId)
+        .eq("is_current", true)
+    );
+    expect(swapped).toEqual([{ menu_id: fx.menuId }]);
+  });
+
   it("re-including a section brings it back on the next publish", async () => {
     const c = owner.client;
     const section = unwrap(

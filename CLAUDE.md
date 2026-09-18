@@ -104,7 +104,8 @@
   - `is_active = false` → excluded from `publish_menu` snapshots entirely (hidden from guests, still editable). `is_available = false` → still published, shown as sold out. Test: `tests/publish-visibility.test.ts`.
 - **option_groups:** id, menu_item_id, venue_id, name, position (integer), selection_type, created_at, updated_at.
 - **option_choices:** id, option_group_id, venue_id, name, price_delta_minor (integer), position (integer), created_at, updated_at.
-- **menu_publications:** id, menu_id, venue_id, version, is_current (boolean), snapshot (JSONB), created_at.
+- **menu_publications:** id, menu_id, venue_id, version, is_current (boolean), snapshot (JSONB), published_at, published_by.
+  - **One published menu per venue.** `publish_menu` retires any other current publication in the venue and sets that menu back to draft, atomically. Enforced by partial unique index `menu_publications_one_current_per_venue (venue_id) where is_current`. The menus page shows a confirm dialog before replacing a live menu.
 
 ---
 

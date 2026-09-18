@@ -7,6 +7,14 @@ import { getPhotoUrl } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -51,6 +59,7 @@ export default function MenusPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [pendingPublish, setPendingPublish] = useState<Menu | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [logoPath, setLogoPath] = useState<string | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -230,7 +239,9 @@ export default function MenusPage() {
     }
   };
 
-  const handlePublish = async (menu: Menu) => {
+  const currentlyPublished = menus.find((m) => m.status === "published") ?? null;
+
+  const publishMenu = async (menu: Menu) => {
     setPublishingId(menu.id);
     setError(null);
     const { error } = await supabase.rpc("publish_menu", { p_menu_id: menu.id });
@@ -240,6 +251,20 @@ export default function MenusPage() {
       await loadMenus();
     }
     setPublishingId(null);
+  };
+
+  const handlePublish = (menu: Menu) => {
+    if (currentlyPublished && currentlyPublished.id !== menu.id) {
+      setPendingPublish(menu);
+      return;
+    }
+    void publishMenu(menu);
+  };
+
+  const confirmReplacePublish = async () => {
+    const menu = pendingPublish;
+    setPendingPublish(null);
+    if (menu) await publishMenu(menu);
   };
 
   const handleUnpublish = async (menu: Menu) => {
@@ -429,6 +454,34 @@ export default function MenusPage() {
           ))}
         </div>
       )}
+
+      <Dialog
+        open={pendingPublish !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingPublish(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Replace the published menu?</DialogTitle>
+            <DialogDescription>
+              Only one menu can be published at a time. Publishing &ldquo;
+              {pendingPublish?.name}&rdquo; will hide &ldquo;{currentlyPublished?.name}
+              &rdquo; from guests immediately. You can publish it again later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingPublish(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmReplacePublish}>
+              <Globe className="w-4 h-4 mr-2" />
+              Publish &ldquo;{pendingPublish?.name}&rdquo; and hide &ldquo;
+              {currentlyPublished?.name}&rdquo;
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
