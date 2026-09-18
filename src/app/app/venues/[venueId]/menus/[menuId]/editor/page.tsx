@@ -334,7 +334,7 @@ export default function MenuEditor() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Link href={`/app/venues/${venueId}/menus`}>
+        <Link href={`/app/venues/${venueId}/menus?tab=menus`}>
           <Button variant="outline" size="sm">
             <ChevronLeft className="w-4 h-4" />
             Back to Menus
