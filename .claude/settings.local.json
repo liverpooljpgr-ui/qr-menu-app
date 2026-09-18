@@ -4,7 +4,23 @@
       "PowerShell(Get-Command python,python3,py,node,npm -ErrorAction SilentlyContinue)",
       "PowerShell(py -3 --version)",
       "PowerShell(py -3 -m pip --version)",
-      "mcp__claude-in-chrome__javascript_tool"
+      "mcp__claude-in-chrome__javascript_tool",
+      "Bash(npm install *)",
+      "Bash(npx supabase *)",
+      "Bash(sleep 4; cat \"/c/Users/liver/AppData/Local/Temp/claude/C--Users-liver-books-bot/2a10235c-18c5-4b7c-b908-014c583dd550/tasks/bonaqv19k.output\")",
+      "Bash(echo \"exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(grep -oE '^      [a-z_]+: \\\\{$' src/lib/supabase/database.types.ts)",
+      "Bash(npm run *)",
+      "WebFetch(domain:developers.google.com)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__navigate",
+      "PowerShell(winget install --id OpenJS.NodeJS.LTS -e --silent --accept-source-agreements --accept-package-agreements)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); node --version; npm --version; \\(Get-Command node\\).Source)",
+      "Bash(sed -i '132d' tests/rls-isolation.test.ts)",
+      "Bash(sed -i '/    orgIds.push\\(A.orgId, B.orgId\\);/d' tests/rls-isolation.test.ts)",
+      "Bash(sed -i 's/    await cleanup\\(admin, orgIds, userIds\\);/    await cleanup\\(admin, runId, userIds\\);/' tests/rls-isolation.test.ts)",
+      "WebSearch"
     ]
   }
 }
