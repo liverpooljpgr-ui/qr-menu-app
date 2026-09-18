@@ -73,7 +73,7 @@ export default function MenusPage() {
     const [{ data }, { data: branding }] = await Promise.all([
       supabase
         .from("venues")
-        .select("id, name, slug, currency, timezone, default_locale")
+        .select("id, name, slug, currency, timezone, default_locale, address")
         .eq("id", venueId)
         .maybeSingle(),
       supabase.from("brandings").select("logo_path").eq("venue_id", venueId).maybeSingle(),

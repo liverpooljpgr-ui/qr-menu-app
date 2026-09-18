@@ -568,6 +568,7 @@ export type Database = {
       }
       venues: {
         Row: {
+          address: string | null
           created_at: string
           currency: string
           default_locale: string
@@ -580,6 +581,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           currency: string
           default_locale?: string
@@ -592,6 +594,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           currency?: string
           default_locale?: string

@@ -97,7 +97,8 @@
 ## Database Schema (Key Tables)
 
 - **organizations:** id, name, slug, created_at, updated_at.
-- **venues:** id, organization_id, name, slug, currency, created_at, updated_at.
+- **venues:** id, organization_id, name, slug, currency, timezone, default_locale, supported_locales, address (nullable), created_at, updated_at. Edited on the Venue tab of `/app/venues/[venueId]/menus`.
+- **brandings:** id, venue_id (unique → one-to-one, embed as `brandings(logo_path)`), theme_key, palette, logo_path.
 - **menus:** id, venue_id, name, status ("draft" | "published"), created_at, updated_at.
 - **menu_sections:** id, menu_id, venue_id, name, position (integer), is_active (boolean), created_at, updated_at.
 - **menu_items:** id, section_id, venue_id, name, price_minor (integer), description (nullable), photo_path (nullable), is_available (boolean), is_active (boolean), created_at, updated_at.

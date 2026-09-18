@@ -15,6 +15,7 @@ export interface VenueSettings {
   currency: string;
   timezone: string;
   default_locale: string;
+  address: string | null;
 }
 
 interface VenueSettingsFormProps {
@@ -49,6 +50,7 @@ export function VenueSettingsForm({
     currency: venue.currency,
     timezone: venue.timezone,
     default_locale: venue.default_locale,
+    address: venue.address ?? "",
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -64,7 +66,8 @@ export function VenueSettingsForm({
     form.slug !== venue.slug ||
     form.currency !== venue.currency ||
     form.timezone !== venue.timezone ||
-    form.default_locale !== venue.default_locale;
+    form.default_locale !== venue.default_locale ||
+    form.address !== (venue.address ?? "");
 
   const slugChanged = form.slug !== venue.slug;
 
@@ -87,7 +90,14 @@ export function VenueSettingsForm({
     if (!default_locale) return setError("Default locale is required.");
 
     setIsSaving(true);
-    const patch = { name, slug, currency: form.currency, timezone: form.timezone, default_locale };
+    const patch = {
+      name,
+      slug,
+      currency: form.currency,
+      timezone: form.timezone,
+      default_locale,
+      address: form.address.trim() || null,
+    };
     const { error } = await supabase.from("venues").update(patch).eq("id", venue.id);
     setIsSaving(false);
 
@@ -98,7 +108,7 @@ export function VenueSettingsForm({
       return;
     }
     onVenueChange({ id: venue.id, ...patch });
-    setForm(patch);
+    setForm({ ...patch, address: patch.address ?? "" });
     setSavedAt(Date.now());
   };
 
@@ -194,6 +204,17 @@ export function VenueSettingsForm({
             will stop working.
           </p>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="venue-address">Address</Label>
+        <Input
+          id="venue-address"
+          value={form.address}
+          onChange={set("address")}
+          disabled={isSaving}
+          placeholder="12 Market Street, Springfield"
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
