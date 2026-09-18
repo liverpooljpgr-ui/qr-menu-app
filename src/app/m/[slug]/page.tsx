@@ -10,6 +10,7 @@ import type { MenuSnapshot } from "@/lib/menu-snapshot";
 import { logoPathOf, venueIconPath } from "@/lib/venue-icons";
 
 type Params = Promise<{ slug: string }>;
+type SearchParams = Promise<{ menu?: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
@@ -25,8 +26,15 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
-export default async function GuestMenuPage({ params }: { params: Params }) {
+export default async function GuestMenuPage({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}) {
   const { slug } = await params;
+  const { menu: menuFilter } = await searchParams;
   const venue = await resolveGuestVenue(slug);
   if (!venue) notFound();
 
@@ -38,8 +46,12 @@ export default async function GuestMenuPage({ params }: { params: Params }) {
     .eq("is_current", true)
     .order("published_at");
 
-  const menus = (publications ?? []).map((p) => p.snapshot as unknown as MenuSnapshot);
-  if (menus.length === 0) notFound();
+  const allMenus = (publications ?? []).map((p) => p.snapshot as unknown as MenuSnapshot);
+  if (allMenus.length === 0) notFound();
+
+  // Admin "Guest view" links target one menu; a stale id just shows everything.
+  const filtered = menuFilter ? allMenus.filter((m) => m.menu.id === menuFilter) : [];
+  const menus = filtered.length > 0 ? filtered : allMenus;
 
   return (
     <>

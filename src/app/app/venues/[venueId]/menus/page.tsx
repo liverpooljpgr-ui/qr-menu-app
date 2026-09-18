@@ -299,14 +299,6 @@ export default function MenusPage() {
           <ImagePlus className="w-4 h-4 mr-2" />
           {isUploadingLogo ? "Uploading..." : logoPath ? "Change logo" : "Set logo"}
         </Button>
-        {menus.some((m) => m.status === "published") && (
-          <a href={`/m/${venue.slug}`} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Guest view
-            </Button>
-          </a>
-        )}
       </div>
 
       {error && (
@@ -396,15 +388,27 @@ export default function MenusPage() {
                   </Button>
 
                   {menu.status === "published" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleUnpublish(menu)}
-                      disabled={publishingId === menu.id}
-                    >
-                      <EyeOff className="w-4 h-4 mr-2" />
-                      Unpublish
-                    </Button>
+                    <>
+                      <a
+                        href={`/m/${venue.slug}?menu=${menu.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button variant="outline" size="sm">
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Guest view
+                        </Button>
+                      </a>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleUnpublish(menu)}
+                        disabled={publishingId === menu.id}
+                      >
+                        <EyeOff className="w-4 h-4 mr-2" />
+                        Unpublish
+                      </Button>
+                    </>
                   )}
 
                   {/* Delete Button - only for inactive menus */}
