@@ -61,6 +61,10 @@
 
 **Route:** `/m/[slug]` (public, no auth). Server component: `resolve_venue_slug` RPC → current `menu_publications` for the venue → `src/components/guest/guest-menu.tsx`. Renders snapshots only, never live tables, so guests see the last published version until Republish. 404s when nothing is published. Snapshot shape: `src/lib/menu-snapshot.ts`.
 
+**Installable per venue:** `/m/[slug]/manifest.webmanifest` (route handler) gives each venue its own PWA identity (`id`/`start_url`/`scope` = `/m/{slug}`), so "Bistro" and "Cafe" install side by side. The root `manifest.ts` is the admin app's identity and applies to `/app`. `InstallPrompt` with `appName` renders the branded guest prompt; without it, it's the admin prompt and hides on `/m/`.
+
+**Freshness / offline:** `AutoRefresh` calls `router.refresh()` on visibility/online/60s. SW is network-first for `/m/**` documents and cache-first for Supabase Storage photos. When the SW serves a navigation from cache it records the client id; `OfflineNotice` asks it on mount and shows "last saved version from {time}", clearing itself when a fresh render changes `savedAt`. Test this with a production build (`next-prod` launch config, port 3001) — the SW does not register in dev.
+
 ### Service Worker
 
 **File:** `public/sw.js` (v2)  

@@ -1,27 +1,31 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { resolveGuestVenue } from "@/lib/guest-venue";
 import { GuestMenu } from "@/components/guest/guest-menu";
 import { AutoRefresh } from "@/components/guest/auto-refresh";
+import { OfflineNotice } from "@/components/guest/offline-notice";
+import { InstallPrompt } from "@/components/install-prompt";
 import type { MenuSnapshot } from "@/lib/menu-snapshot";
 
 type Params = Promise<{ slug: string }>;
 
-async function loadVenue(slug: string) {
-  const supabase = await createClient();
-  const { data } = await supabase.rpc("resolve_venue_slug", { p_slug: slug });
-  return data?.[0] ?? null;
-}
-
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  const venue = await loadVenue(slug);
-  return { title: venue ? `${venue.venue_name} · Menu` : "Menu" };
+  const venue = await resolveGuestVenue(slug);
+  if (!venue) return { title: "Menu" };
+
+  return {
+    title: `${venue.venue_name} · Menu`,
+    manifest: `/m/${slug}/manifest.webmanifest`,
+    appleWebApp: { capable: true, title: venue.venue_name, statusBarStyle: "default" },
+    icons: { apple: "/icons/icon-192.png" },
+  };
 }
 
 export default async function GuestMenuPage({ params }: { params: Params }) {
   const { slug } = await params;
-  const venue = await loadVenue(slug);
+  const venue = await resolveGuestVenue(slug);
   if (!venue) notFound();
 
   const supabase = await createClient();
@@ -38,12 +42,14 @@ export default async function GuestMenuPage({ params }: { params: Params }) {
   return (
     <>
       <AutoRefresh />
+      <OfflineNotice savedAt={new Date().toISOString()} />
       <GuestMenu
         venueName={venue.venue_name}
         currency={venue.currency}
         locale={venue.default_locale}
         menus={menus}
       />
+      <InstallPrompt appName={venue.venue_name} storageKey={`install-dismissed:${slug}`} />
     </>
   );
 }

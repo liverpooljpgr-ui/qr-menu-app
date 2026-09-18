@@ -17,7 +17,24 @@ function isStandalone() {
   );
 }
 
-export function InstallPrompt() {
+interface InstallPromptProps {
+  // Branded prompt for a guest menu; without it, this is the generic admin
+  // prompt and stays off /m/ so guests aren't offered the wrong app.
+  appName?: string;
+  // Persist dismissal across visits (guests shouldn't be nagged every scan).
+  storageKey?: string;
+}
+
+function readDismissed(storageKey?: string) {
+  if (!storageKey || typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem(storageKey) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function InstallPrompt({ appName, storageKey }: InstallPromptProps = {}) {
   const pathname = usePathname();
   const [installEvent, setInstallEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -27,7 +44,16 @@ export function InstallPrompt() {
   const [installed, setInstalled] = useState(
     () => typeof window === "undefined" || isStandalone()
   );
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => readDismissed(storageKey));
+
+  const dismiss = () => {
+    setDismissed(true);
+    if (storageKey) {
+      try {
+        localStorage.setItem(storageKey, "1");
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     const onBeforeInstallPrompt = (event: Event) => {
@@ -44,8 +70,7 @@ export function InstallPrompt() {
     };
   }, []);
 
-  // Guests scanning a QR code shouldn't be nudged to install the venue's admin app.
-  if (pathname.startsWith("/m/")) return null;
+  if (!appName && pathname.startsWith("/m/")) return null;
   if (installed || dismissed) return null;
   if (!installEvent && !isIOS) return null;
 
@@ -57,28 +82,34 @@ export function InstallPrompt() {
     setInstallEvent(null);
   }
 
+  const subject = appName ?? "this app";
+
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-between gap-3 border-t bg-background px-4 py-3 shadow-lg">
       {installEvent ? (
         <>
-          <p className="text-sm">Install this app for quicker access.</p>
+          <p className="text-sm">
+            {appName
+              ? `Add ${appName} to your home screen for quick access.`
+              : "Install this app for quicker access."}
+          </p>
           <div className="flex shrink-0 gap-2">
             <Button size="sm" onClick={handleInstallClick}>
-              Install
+              {appName ? "Add" : "Install"}
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setDismissed(true)}>
-              Dismiss
+            <Button size="sm" variant="ghost" onClick={dismiss}>
+              {appName ? "Not now" : "Dismiss"}
             </Button>
           </div>
         </>
       ) : (
         <>
           <p className="text-sm">
-            Install this app: tap <span aria-hidden>⎋</span> Share, then
-            &ldquo;Add to Home Screen&rdquo;.
+            Add {subject} to your home screen: tap <span aria-hidden>⎋</span>{" "}
+            Share, then &ldquo;Add to Home Screen&rdquo;.
           </p>
-          <Button size="sm" variant="ghost" onClick={() => setDismissed(true)}>
-            Dismiss
+          <Button size="sm" variant="ghost" onClick={dismiss}>
+            {appName ? "Not now" : "Dismiss"}
           </Button>
         </>
       )}
