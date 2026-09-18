@@ -7,6 +7,7 @@ import { AutoRefresh } from "@/components/guest/auto-refresh";
 import { OfflineNotice } from "@/components/guest/offline-notice";
 import { InstallPrompt } from "@/components/install-prompt";
 import type { MenuSnapshot } from "@/lib/menu-snapshot";
+import { logoPathOf, venueIconPath } from "@/lib/venue-icons";
 
 type Params = Promise<{ slug: string }>;
 
@@ -15,11 +16,12 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const venue = await resolveGuestVenue(slug);
   if (!venue) return { title: "Menu" };
 
+  const logoPath = logoPathOf(venue.branding);
   return {
     title: `${venue.venue_name} · Menu`,
     manifest: `/m/${slug}/manifest.webmanifest`,
     appleWebApp: { capable: true, title: venue.venue_name, statusBarStyle: "default" },
-    icons: { apple: "/icons/icon-192.png" },
+    icons: { apple: logoPath ? venueIconPath(slug, 180, logoPath) : "/icons/icon-192.png" },
   };
 }
 

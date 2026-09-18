@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getPhotoUrl } from "@/lib/storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,10 @@ import {
   Globe,
   EyeOff,
   ExternalLink,
+  ImagePlus,
 } from "lucide-react";
+
+const MAX_LOGO_BYTES = 2 * 1024 * 1024;
 
 interface Menu {
   id: string;
@@ -48,6 +52,9 @@ export default function MenusPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadVenue();
@@ -55,13 +62,44 @@ export default function MenusPage() {
   }, [venueId]);
 
   const loadVenue = async () => {
-    const { data } = await supabase
-      .from("venues")
-      .select("id, name, slug")
-      .eq("id", venueId)
-      .single();
+    const [{ data }, { data: branding }] = await Promise.all([
+      supabase.from("venues").select("id, name, slug").eq("id", venueId).single(),
+      supabase.from("brandings").select("logo_path").eq("venue_id", venueId).maybeSingle(),
+    ]);
 
     setVenue(data);
+    setLogoPath(branding?.logo_path ?? null);
+  };
+
+  const handleLogoChange = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_LOGO_BYTES) {
+      setError("Logo must be 2 MB or smaller.");
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("venueId", venueId);
+      const res = await fetch("/api/storage/upload", { method: "POST", body: formData });
+      const body = await res.json();
+      if (!res.ok || body.error) throw new Error(body.error || "Logo upload failed");
+
+      const { error } = await supabase
+        .from("brandings")
+        .upsert({ venue_id: venueId, logo_path: body.path }, { onConflict: "venue_id" });
+      if (error) throw error;
+
+      setLogoPath(body.path);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save logo");
+    } finally {
+      setIsUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
   };
 
   const loadMenus = async () => {
@@ -232,10 +270,35 @@ export default function MenusPage() {
             Back
           </Button>
         </Link>
+        <div className="w-12 h-12 rounded-lg border bg-muted overflow-hidden flex items-center justify-center flex-shrink-0">
+          {logoPath ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={getPhotoUrl(logoPath)} alt="" className="w-full h-full object-contain" />
+          ) : (
+            <ImagePlus className="w-5 h-5 text-muted-foreground" />
+          )}
+        </div>
         <div className="flex-1">
           <h1 className="text-2xl font-semibold">{venue.name}</h1>
           <p className="text-sm text-muted-foreground">Manage menus</p>
         </div>
+        <input
+          ref={logoInputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+          className="hidden"
+          onChange={(e) => handleLogoChange(e.target.files?.[0])}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => logoInputRef.current?.click()}
+          disabled={isUploadingLogo}
+          title="Used as the app icon when guests add this menu to their home screen"
+        >
+          <ImagePlus className="w-4 h-4 mr-2" />
+          {isUploadingLogo ? "Uploading..." : logoPath ? "Change logo" : "Set logo"}
+        </Button>
         {menus.some((m) => m.status === "published") && (
           <a href={`/m/${venue.slug}`} target="_blank" rel="noopener noreferrer">
             <Button variant="outline" size="sm">

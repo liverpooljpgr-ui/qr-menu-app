@@ -63,6 +63,8 @@
 
 **Installable per venue:** `/m/[slug]/manifest.webmanifest` (route handler) gives each venue its own PWA identity (`id`/`start_url`/`scope` = `/m/{slug}`), so "Bistro" and "Cafe" install side by side. The root `manifest.ts` is the admin app's identity and applies to `/app`. `InstallPrompt` with `appName` renders the branded guest prompt; without it, it's the admin prompt and hides on `/m/`.
 
+**Per-venue icons:** `brandings.logo_path` (same bucket/path format as `photo_path`; set via "Set logo" on the menus page) is rendered by `/m/[slug]/icon/[size]` (180/192/512, `?maskable=1` for a wider margin) using `sharp` into a square opaque PNG. URLs carry `?v=<sha1(logo_path)>` because installed apps only refetch an icon when its URL changes. No logo → manifest falls back to `/icons/icon-*.png` and the icon route 404s.
+
 **Freshness / offline:** `AutoRefresh` calls `router.refresh()` on visibility/online/60s. SW is network-first for `/m/**` documents and cache-first for Supabase Storage photos. When the SW serves a navigation from cache it records the client id; `OfflineNotice` asks it on mount and shows "last saved version from {time}", clearing itself when a fresh render changes `savedAt`. Test this with a production build (`next-prod` launch config, port 3001) — the SW does not register in dev.
 
 ### Service Worker
@@ -88,6 +90,7 @@
 - `browser-image-compression@2.0.2` — client-side image compression (2MB+ → 400KB target, Stage 2+).
 - `@hookform/react` + `zod` — form validation.
 - `lucide-react` — icons.
+- `sharp@0.35` — server-side rendering of venue logos into PWA launcher icons.
 
 ---
 
