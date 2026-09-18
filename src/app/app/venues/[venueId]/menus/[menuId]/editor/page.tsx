@@ -42,6 +42,7 @@ export default function MenuEditor() {
   const [editingSection, setEditingSection] = useState<MenuSection | null>(null);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -105,6 +106,7 @@ export default function MenuEditor() {
     description?: string;
   }) => {
     setIsSaving(true);
+    setError(null);
     try {
       if (editingSection) {
         const { error } = await supabase
@@ -122,15 +124,22 @@ export default function MenuEditor() {
               menu_id: menuId,
               position: sections.length,
               venue_id: venueId,
+              translations: {},
             },
           ]);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Section insert error:", error);
+          throw error;
+        }
       }
 
       setFormMode("none");
       setEditingSection(null);
       await loadSections();
+    } catch (err) {
+      console.error("Error saving section:", err);
+      setError(err instanceof Error ? err.message : "Failed to save section");
     } finally {
       setIsSaving(false);
     }
@@ -143,6 +152,7 @@ export default function MenuEditor() {
     photoFile?: File;
   }) => {
     setIsSaving(true);
+    setError(null);
     try {
       let photoPath = editingItem?.photo_path;
 
@@ -175,7 +185,10 @@ export default function MenuEditor() {
           .update(itemData)
           .eq("id", editingItem.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Item update error:", error);
+          throw error;
+        }
       } else {
         const { error } = await supabase
           .from("menu_items")
@@ -185,15 +198,23 @@ export default function MenuEditor() {
               section_id: selectedSection!.id,
               venue_id: venueId,
               position: items.length,
+              translations: {},
             },
           ]);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Item insert error:", error);
+          console.error("Error details:", JSON.stringify(error, null, 2));
+          throw new Error(error.message || "Failed to create item");
+        }
       }
 
       setFormMode("none");
       setEditingItem(null);
       await loadItems(selectedSection!.id);
+    } catch (err) {
+      console.error("Error saving item:", err);
+      setError(err instanceof Error ? err.message : "Failed to save item");
     } finally {
       setIsSaving(false);
     }
@@ -282,6 +303,12 @@ export default function MenuEditor() {
           <p className="text-sm text-muted-foreground">Edit menu</p>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md text-sm">
+          Error: {error}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Sections Panel */}
