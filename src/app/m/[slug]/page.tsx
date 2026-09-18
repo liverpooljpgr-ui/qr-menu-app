@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { GuestMenu } from "@/components/guest/guest-menu";
+import { AutoRefresh } from "@/components/guest/auto-refresh";
 import type { MenuSnapshot } from "@/lib/menu-snapshot";
 
 type Params = Promise<{ slug: string }>;
@@ -35,11 +36,14 @@ export default async function GuestMenuPage({ params }: { params: Params }) {
   if (menus.length === 0) notFound();
 
   return (
-    <GuestMenu
-      venueName={venue.venue_name}
-      currency={venue.currency}
-      locale={venue.default_locale}
-      menus={menus}
-    />
+    <>
+      <AutoRefresh />
+      <GuestMenu
+        venueName={venue.venue_name}
+        currency={venue.currency}
+        locale={venue.default_locale}
+        menus={menus}
+      />
+    </>
   );
 }

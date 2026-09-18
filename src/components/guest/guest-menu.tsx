@@ -73,7 +73,10 @@ function ItemRow({
   );
 }
 
-export function GuestMenu({ venueName, currency, locale, menus }: GuestMenuProps) {
+export function GuestMenu({ venueName, currency, locale, menus: rawMenus }: GuestMenuProps) {
+  const menus = rawMenus
+    .map((m) => ({ ...m, sections: m.sections.filter((s) => s.items.length > 0) }))
+    .filter((m) => m.sections.length > 0);
   const allSections = menus.flatMap((m) => m.sections);
   const showMenuNames = menus.length > 1;
 
