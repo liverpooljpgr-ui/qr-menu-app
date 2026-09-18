@@ -7,7 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import { ChevronLeft, Plus, Edit2, Trash2, Copy, CheckCircle, Circle } from "lucide-react";
+import {
+  ChevronLeft,
+  Plus,
+  Edit2,
+  Trash2,
+  Copy,
+  CheckCircle,
+  Circle,
+  Globe,
+  EyeOff,
+} from "lucide-react";
 
 interface Menu {
   id: string;
@@ -34,6 +44,8 @@ export default function MenusPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadVenue();
@@ -118,6 +130,7 @@ export default function MenusPage() {
             venue_id: venueId,
             name: s.name,
             position: s.position,
+            is_active: s.is_active,
           }));
 
           const { data: insertedSections } = await supabase
@@ -142,6 +155,7 @@ export default function MenusPage() {
                   price_minor: item.price_minor,
                   photo_path: item.photo_path,
                   is_available: item.is_available,
+                  is_active: item.is_active,
                   position: item.position,
                 }));
 
@@ -176,24 +190,30 @@ export default function MenusPage() {
     }
   };
 
-  const handleChangeStatus = async (menu: Menu) => {
-    try {
-      const newStatus = menu.status === "published" ? "draft" : "published";
-
-      const { error } = await supabase
-        .from("menus")
-        .update({
-          status: newStatus,
-          published_at: newStatus === "published" ? new Date().toISOString() : null,
-        })
-        .eq("id", menu.id);
-
-      if (error) throw error;
+  const handlePublish = async (menu: Menu) => {
+    setPublishingId(menu.id);
+    setError(null);
+    const { error } = await supabase.rpc("publish_menu", { p_menu_id: menu.id });
+    if (error) {
+      setError(error.message);
+    } else {
       await loadMenus();
-    } catch (error) {
-      console.error("Failed to change menu status:", error);
-      alert("Failed to change menu status");
     }
+    setPublishingId(null);
+  };
+
+  const handleUnpublish = async (menu: Menu) => {
+    if (!confirm("Unpublish this menu? Guests will no longer be able to see it.")) return;
+
+    setPublishingId(menu.id);
+    setError(null);
+    const { error } = await supabase.rpc("unpublish_menu", { p_menu_id: menu.id });
+    if (error) {
+      setError(error.message);
+    } else {
+      await loadMenus();
+    }
+    setPublishingId(null);
   };
 
   if (!venue) {
@@ -215,6 +235,12 @@ export default function MenusPage() {
           <p className="text-sm text-muted-foreground">Manage menus</p>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Create New Menu Button */}
       <Button
@@ -242,7 +268,9 @@ export default function MenusPage() {
                 <div>
                   <CardTitle>{menu.name}</CardTitle>
                   <CardDescription>
-                    Created {new Date(menu.created_at).toLocaleDateString()}
+                    {menu.status === "published" && menu.published_at
+                      ? `Published ${new Date(menu.published_at).toLocaleString()}`
+                      : `Created ${new Date(menu.created_at).toLocaleDateString()}`}
                   </CardDescription>
                 </div>
                 <Badge
@@ -252,7 +280,7 @@ export default function MenusPage() {
                   {menu.status === "published" ? (
                     <>
                       <CheckCircle className="w-3 h-3 mr-1" />
-                      Active
+                      Published
                     </>
                   ) : (
                     <>
@@ -265,17 +293,13 @@ export default function MenusPage() {
 
               <CardContent>
                 <div className="flex gap-2 flex-wrap">
-                  {/* Edit Button - only for draft menus */}
-                  {menu.status === "draft" && (
-                    <Link href={`/app/venues/${venueId}/menus/${menu.id}/editor`}>
-                      <Button variant="outline" size="sm">
-                        <Edit2 className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                    </Link>
-                  )}
+                  <Link href={`/app/venues/${venueId}/menus/${menu.id}/editor`}>
+                    <Button variant="outline" size="sm">
+                      <Edit2 className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  </Link>
 
-                  {/* Duplicate Button */}
                   <Button
                     variant="outline"
                     size="sm"
@@ -285,14 +309,30 @@ export default function MenusPage() {
                     Duplicate
                   </Button>
 
-                  {/* Change Status Button */}
                   <Button
-                    variant={menu.status === "published" ? "destructive" : "default"}
                     size="sm"
-                    onClick={() => handleChangeStatus(menu)}
+                    onClick={() => handlePublish(menu)}
+                    disabled={publishingId === menu.id}
                   >
-                    {menu.status === "published" ? "Deactivate" : "Activate"}
+                    <Globe className="w-4 h-4 mr-2" />
+                    {publishingId === menu.id
+                      ? "Publishing..."
+                      : menu.status === "published"
+                        ? "Republish"
+                        : "Publish"}
                   </Button>
+
+                  {menu.status === "published" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleUnpublish(menu)}
+                      disabled={publishingId === menu.id}
+                    >
+                      <EyeOff className="w-4 h-4 mr-2" />
+                      Unpublish
+                    </Button>
+                  )}
 
                   {/* Delete Button - only for inactive menus */}
                   {menu.status !== "published" && (
