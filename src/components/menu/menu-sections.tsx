@@ -18,15 +18,17 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, GripVertical, Plus, Trash2 } from "lucide-react";
 
 export interface MenuSection {
   id: string;
   name: string;
   menu_id: string;
   position: number;
+  is_active: boolean;
 }
 
 interface MenuSectionsProps {
@@ -36,6 +38,7 @@ interface MenuSectionsProps {
   onAddSection?: () => void;
   onSelectSection?: (section: MenuSection) => void;
   onEditSection?: (section: MenuSection) => void;
+  onToggleActive?: (section: MenuSection) => void;
   onDeleteSection?: (id: string) => void;
   onReorder?: (sections: MenuSection[]) => Promise<void>;
 }
@@ -45,12 +48,14 @@ function SortableSection({
   isSelected,
   onSelect,
   onEdit,
+  onToggleActive,
   onDelete,
 }: {
   section: MenuSection;
   isSelected?: boolean;
   onSelect?: (section: MenuSection) => void;
   onEdit?: (section: MenuSection) => void;
+  onToggleActive?: (section: MenuSection) => void;
   onDelete?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -67,7 +72,7 @@ function SortableSection({
       <Card
         className={`p-4 flex items-center gap-4 hover:shadow-md transition-shadow cursor-pointer ${
           isSelected ? 'ring-2 ring-primary bg-primary/5' : ''
-        }`}
+        } ${section.is_active ? '' : 'opacity-60'}`}
         onClick={() => onSelect?.(section)}
       >
         <button
@@ -79,11 +84,23 @@ function SortableSection({
           <GripVertical className="w-5 h-5" />
         </button>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex items-center gap-2">
           <p className="font-medium truncate">{section.name}</p>
+          {!section.is_active && <Badge variant="secondary">Hidden</Badge>}
         </div>
 
         <div className="flex gap-2">
+          {onToggleActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              title={section.is_active ? "Hide from published menu" : "Show in published menu"}
+              aria-label={section.is_active ? "Hide section" : "Show section"}
+              onClick={() => onToggleActive(section)}
+            >
+              {section.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </Button>
+          )}
           {onEdit && (
             <Button
               variant="outline"
@@ -115,6 +132,7 @@ export function MenuSections({
   onAddSection,
   onSelectSection,
   onEditSection,
+  onToggleActive,
   onDeleteSection,
   onReorder,
 }: MenuSectionsProps) {
@@ -210,6 +228,7 @@ export function MenuSections({
                 isSelected={section.id === selectedSectionId}
                 onSelect={onSelectSection}
                 onEdit={onEditSection}
+                onToggleActive={onToggleActive}
                 onDelete={onDeleteSection}
               />
             ))}

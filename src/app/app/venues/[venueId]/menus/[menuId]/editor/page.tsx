@@ -255,6 +255,43 @@ export default function MenuEditor() {
     setItems(reorderedItems);
   };
 
+  const handleToggleSection = async (section: MenuSection) => {
+    const next = !section.is_active;
+    setSections((prev) =>
+      prev.map((s) => (s.id === section.id ? { ...s, is_active: next } : s))
+    );
+    setSelectedSection((prev) =>
+      prev?.id === section.id ? { ...prev, is_active: next } : prev
+    );
+
+    const { error } = await supabase
+      .from("menu_sections")
+      .update({ is_active: next })
+      .eq("id", section.id);
+
+    if (error) {
+      setError(error.message);
+      await loadSections();
+    }
+  };
+
+  const handleToggleItem = async (item: MenuItem) => {
+    const next = !item.is_active;
+    setItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, is_active: next } : i))
+    );
+
+    const { error } = await supabase
+      .from("menu_items")
+      .update({ is_active: next })
+      .eq("id", item.id);
+
+    if (error) {
+      setError(error.message);
+      await loadItems(item.section_id);
+    }
+  };
+
   const handleDeleteSection = async (sectionId: string) => {
     if (!confirm("Delete this section and all its items?")) return;
 
@@ -343,6 +380,7 @@ export default function MenuEditor() {
                 setEditingSection(section);
                 setFormMode("edit-section");
               }}
+              onToggleActive={handleToggleSection}
               onDeleteSection={handleDeleteSection}
               onReorder={handleReorderSections}
             />
@@ -366,7 +404,14 @@ export default function MenuEditor() {
             />
           ) : selectedSection ? (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">{selectedSection.name}</h2>
+              <div>
+                <h2 className="text-lg font-semibold">{selectedSection.name}</h2>
+                {!selectedSection.is_active && (
+                  <p className="text-sm text-muted-foreground">
+                    This section is hidden from the published menu.
+                  </p>
+                )}
+              </div>
               <MenuItems
                 items={items}
                 isLoading={isLoading}
@@ -378,6 +423,7 @@ export default function MenuEditor() {
                   setEditingItem(item);
                   setFormMode("edit-item");
                 }}
+                onToggleActive={handleToggleItem}
                 onDeleteItem={handleDeleteItem}
                 onReorder={handleReorderItems}
               />

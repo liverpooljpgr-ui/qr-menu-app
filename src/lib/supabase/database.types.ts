@@ -201,6 +201,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          is_active: boolean
           is_available: boolean
           name: string
           photo_path: string | null
@@ -216,6 +217,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_active?: boolean
           is_available?: boolean
           name: string
           photo_path?: string | null
@@ -231,6 +233,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          is_active?: boolean
           is_available?: boolean
           name?: string
           photo_path?: string | null
@@ -311,6 +314,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean
           menu_id: string
           name: string
           position: number
@@ -321,6 +325,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean
           menu_id: string
           name: string
           position?: number
@@ -331,6 +336,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean
           menu_id?: string
           name?: string
           position?: number

@@ -18,9 +18,10 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { GripVertical, Plus, Trash2, Image } from "lucide-react";
+import { Eye, EyeOff, GripVertical, Plus, Trash2, Image } from "lucide-react";
 import { getPhotoUrl } from "@/lib/storage";
 
 export interface MenuItem {
@@ -32,6 +33,7 @@ export interface MenuItem {
   photo_path: string | null;
   position: number;
   is_available: boolean;
+  is_active: boolean;
   section_id: string;
 }
 
@@ -40,6 +42,7 @@ interface MenuItemsProps {
   isLoading?: boolean;
   onAddItem?: () => void;
   onEditItem?: (item: MenuItem) => void;
+  onToggleActive?: (item: MenuItem) => void;
   onDeleteItem?: (id: string) => void;
   onReorder?: (items: MenuItem[]) => Promise<void>;
 }
@@ -47,10 +50,12 @@ interface MenuItemsProps {
 function SortableItem({
   item,
   onEdit,
+  onToggleActive,
   onDelete,
 }: {
   item: MenuItem;
   onEdit?: (item: MenuItem) => void;
+  onToggleActive?: (item: MenuItem) => void;
   onDelete?: (id: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -67,7 +72,11 @@ function SortableItem({
 
   return (
     <div ref={setNodeRef} style={style} suppressHydrationWarning>
-      <Card className="p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+      <Card
+        className={`p-4 flex items-center gap-4 hover:shadow-md transition-shadow ${
+          item.is_active ? "" : "opacity-60"
+        }`}
+      >
         <button
           type="button"
           {...attributes}
@@ -91,7 +100,10 @@ function SortableItem({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{item.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-medium truncate">{item.name}</p>
+            {!item.is_active && <Badge variant="secondary">Hidden</Badge>}
+          </div>
           {item.description && (
             <p className="text-sm text-muted-foreground line-clamp-2">
               {item.description}
@@ -106,6 +118,17 @@ function SortableItem({
         </div>
 
         <div className="flex gap-2">
+          {onToggleActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              title={item.is_active ? "Hide from published menu" : "Show in published menu"}
+              aria-label={item.is_active ? "Hide item" : "Show item"}
+              onClick={() => onToggleActive(item)}
+            >
+              {item.is_active ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+            </Button>
+          )}
           {onEdit && (
             <Button
               variant="outline"
@@ -135,6 +158,7 @@ export function MenuItems({
   isLoading = false,
   onAddItem,
   onEditItem,
+  onToggleActive,
   onDeleteItem,
   onReorder,
 }: MenuItemsProps) {
@@ -228,6 +252,7 @@ export function MenuItems({
                 key={item.id}
                 item={item}
                 onEdit={onEditItem}
+                onToggleActive={onToggleActive}
                 onDelete={onDeleteItem}
               />
             ))}

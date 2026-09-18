@@ -88,8 +88,9 @@
 - **organizations:** id, name, slug, created_at, updated_at.
 - **venues:** id, organization_id, name, slug, currency, created_at, updated_at.
 - **menus:** id, venue_id, name, status ("draft" | "published"), created_at, updated_at.
-- **menu_sections:** id, menu_id, venue_id, name, position (integer), created_at, updated_at.
-- **menu_items:** id, section_id, venue_id, name, price_minor (integer), description (nullable), photo_path (nullable), is_available (boolean), created_at, updated_at.
+- **menu_sections:** id, menu_id, venue_id, name, position (integer), is_active (boolean), created_at, updated_at.
+- **menu_items:** id, section_id, venue_id, name, price_minor (integer), description (nullable), photo_path (nullable), is_available (boolean), is_active (boolean), created_at, updated_at.
+  - `is_active = false` → excluded from `publish_menu` snapshots entirely (hidden from guests, still editable). `is_available = false` → still published, shown as sold out. Test: `tests/publish-visibility.test.ts`.
 - **option_groups:** id, menu_item_id, venue_id, name, position (integer), selection_type, created_at, updated_at.
 - **option_choices:** id, option_group_id, venue_id, name, price_delta_minor (integer), position (integer), created_at, updated_at.
 - **menu_publications:** id, menu_id, venue_id, version, is_current (boolean), snapshot (JSONB), created_at.
