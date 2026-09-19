@@ -2,8 +2,8 @@
 
 ## Project Context
 
-**Repository:** qr-menu (monorepo root at D:\qr-menu)  
-**Primary working directory:** D:\qr-menu  
+**Repository:** github.com/liverpooljpgr-ui/qr-menu-app (branch `master`; Vercel deploys it to https://qr-menu-app-sooty.vercel.app)  
+**Working directory:** wherever the repo is cloned — all paths in this file are repo-relative. Fresh setup: `npm install`, create `.env.local` from `.env.example`, `supabase link --project-ref ufcehcrbtcbfsyebgcpu`.  
 **Stack:** Next.js 16.3.5 (App Router) + TypeScript + Tailwind CSS v4 + shadcn/ui (Nova preset) + Supabase PostgreSQL + Supabase Storage  
 **Status:** Stage 1 complete (auth + RLS isolation). Stage 2 in progress (menu management).
 
